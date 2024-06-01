@@ -36,3 +36,36 @@
     transform: rotate(360deg);
   }
 }
+
+.activity {
+  text-align: center;
+}
+
+.activity img {
+  max-width: 100%;
+  height: auto;
+}
+
+.activity-button {
+  margin: 10px;
+  padding: 15px 30px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.activity-button:nth-child(1) {
+  background-color: green;
+  color: white;
+}
+
+.activity-button:nth-child(2) {
+  background-color: red;
+  color: white;
+}
+
+.activity-button:nth-child(3) {
+  background-color: rgb(233, 233, 101);
+  color: black;
+}
