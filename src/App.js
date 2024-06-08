@@ -1,27 +1,37 @@
-import './App.css';
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Import BrowserRouter, Routes, and Route
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import logo from './logo.svg';
+import './App.css';
 import Mainpage from './mainpage';
-import EventForm from './EventForm';
-import Login from './login'; // Import the Login component
-import Register from './register'; // Import the Register component
+import Login from './login';
+import Postpage from './postpage';
 
 const App = () => {
   return (
-    <div className="App">
-      <BrowserRouter>
+    <Router>
+      <div className="App">
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/login">Login</Link>
+            </li>
+            <li>
+              <Link to="/postpage">Post</Link>
+            </li>
+          </ul>
+        </nav>
         <Routes>
-          <Route path="/" element={<Login />} /> {/* Route for Mainpage */}
-          <Route path="/create-event" element={<EventForm />} /> {/* Route for EventForm */}
-          <Route path="/mainpage" element={<Mainpage />} /> {/* Route for Login */}
-          <Route path="/register" element={<Register />} /> {/* Route for Register */}
+          <Route path="/" element={<Mainpage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/postpage" element={<Postpage />} />
         </Routes>
-      </BrowserRouter>
-    </div>
+      </div>
+    </Router>
   );
 };
 
 export default App;
-
-
 
