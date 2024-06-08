@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from "./sidebar";
+import axios from 'axios'; // Import Axios for making HTTP requests
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+window.Buffer = window.Buffer || require("buffer").Buffer;
 
 const Author = ({ name, imageUrl}) => {
   return (
@@ -14,49 +17,40 @@ const Author = ({ name, imageUrl}) => {
   );
 };
 
-const activitiesData = [
-  {
-    id: 3,
-    title: 'Lake Lag Firepit BBQ',
-    date: 'May 22, 2024',
-    location: 'Lake Lag Firepit',
-    author: {
-      name: "Roberto Floberto",
-      imageUrl: './sample_data/user3.png'
-    },
-    eventImage: './sample_data/lake_lag.png'
-  },
-  {
-    id: 4,
-    title: 'Windy Hill Hike w/ Toyon Hall',
-    date: 'May 25, 2024',
-    location: 'Meet @ Tresidder',
-    author: {
-      name: "Sarah Luu",
-      imageUrl: "./sample_data/user2.png"
-    },
-    eventImage: './sample_data/windy-hill.png'
-  }
-];
+const Activity = ({ activity, author, onYes, onNo, onSave }) => {
+  console.log("AUTHOR:", author, "ACTIVITY", activity);
+  const { title, date, location, eventImage } = activity;
 
-const Activity = ({ activity, onYes, onNo, onSave }) => {
-  const { title, date, location, author, eventImage } = activity;
+  // Convert the Buffer data to Base64
+  const eventImg = `data:${eventImage.contentType};base64,${Buffer.from(
+    eventImage.data
+  ).toString('base64')}`;
+
+  var authorImage = ""
+  if (author) {
+    // set authorImage 
+    authorImage = `data:${author.userImage.contentType};base64,${Buffer.from(
+      author.userImage.data
+    ).toString('base64')}`;
+  }
 
   return (
     <div className="activity-wrapper">
       <div className="activity-box" style={{ border: '1px solid #ccc', borderRadius: '30px', marginBottom: '10px' }}>
-        <div className="activity" style={{ padding: '10px' }}>
-          <Author name={author.name} imageUrl={author.imageUrl} />
-          <img src={eventImage} alt={title} style={{ width: 512, height: 'auto'}} /> 
-          <p><b>{title}</b></p>
-          <p>Date: {date}</p>
-          <p>Location: {location}</p>
-        </div>
+        {author && <Author name={author.username} imageUrl={authorImage} />}
+        {/* Use the converted Base64 string as src */}
+        <img src={eventImg} alt={title} style={{ width: 512, height: 'auto'}} /> 
+        <p><b>{title}</b></p>
+        <p>Date: {date}</p>
+        <p>Location: {location}</p>
       </div>
       <ActivityButtons onYes={onYes} onNo={onNo} onSave={onSave} />
     </div>
   );
 };
+
+
+
 
 const ActivityButtons = ({ onYes, onNo, onSave }) => {
   return (
@@ -73,14 +67,57 @@ const TwoColumnLayout = ({ component }) => { // Destructure component from props
     <div className="two-column-layout" style={{ display: 'flex' }}>
       <Sidebar />
       <div className="main-content" style={{ flex: '1', padding: '20px' }}>
-        {component} {/* render coponent directly */}
+        {component} {/* render component directly */}
       </div>
     </div>
   );
 };
 
-const App = () => {
+const Mainpage = () => {
+  const [activitiesData, setActivitiesData] = useState([]);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  const [userData, setUserData] = useState(null); // State to hold user data
+
+  useEffect(() => {
+    // Fetch events data from the server when the component mounts
+    axios.get('http://localhost:5000/events')
+      .then(response => {
+        setActivitiesData(response.data);
+        console.log('Activities data:', response.data); // Log fetched data
+        
+        // Initialize userData with user data from the first activity
+        const firstActivityUsername = response.data[0]?.authorUsername
+        if (firstActivityUsername) {;
+          axios.get(`http://localhost:5000/user/${firstActivityUsername}`)
+            .then(userResponse => {
+              setUserData(userResponse.data);
+            })
+            .catch(error => {
+              console.error('Error fetching user data:', error);
+            });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching events:', error);
+      });
+  }, []); // Empty dependency array ensures this effect runs only once on mount
+
+  useEffect(() => {
+    // Fetch user data when activitiesData or currentActivityIndex changes
+    if (activitiesData.length > 0 && currentActivityIndex < activitiesData.length) {
+      const username = activitiesData[currentActivityIndex]?.author?.username;
+      if (username) {
+        axios.get(`http://localhost:5000/user/${username}`)
+          .then(response => {
+            setUserData(response.data);
+            console.log('Fetched user data:', response.data); // Log fetched user data
+          })
+          .catch(error => {
+            console.error('Error fetching user data:', error);
+          });
+      }
+    }
+  }, [activitiesData, currentActivityIndex]); // Dependencies: activitiesData and currentActivityIndex
 
   const handleYes = () => {
     setCurrentActivityIndex(currentActivityIndex + 1);
@@ -97,6 +134,7 @@ const App = () => {
   const activityComponent = currentActivityIndex < activitiesData.length ? (
     <Activity
       activity={activitiesData[currentActivityIndex]}
+      author={userData}
       onYes={handleYes}
       onNo={handleNo}
       onSave={handleSave}
@@ -105,8 +143,22 @@ const App = () => {
     <p>No more activities</p>
   );
 
-  return <TwoColumnLayout component={activityComponent} />; // Pass activityComponent directly as prop
+  return (
+  
+  <div>
+    <div className="transition-button" style={{ marginTop: '10px', textAlign: 'center' }}>
+      <Link to="/create-event">
+        <button>Create Event</button>
+      </Link>
+    </div>
+
+    <TwoColumnLayout
+      component={activityComponent}
+      userData={userData} // Pass userData to TwoColumnLayout
+    />
+  </div>
+    
+  ); 
 };
 
-export default App;
-
+export default Mainpage;
