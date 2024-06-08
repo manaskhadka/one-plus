@@ -23,7 +23,8 @@ const EventSchema = new mongoose.Schema({
   eventImage: {
     data: Buffer,
     contentType: String
-  }
+  },
+  description: { type: String, required: true}
 });
 
 // Define a unique compound index for the combination of title, date, and authorUsername
@@ -61,7 +62,7 @@ app.get('/user/:username', async (req, res) => {
   const { username } = req.params;
   try {
     const user = await UserModel.findOne({username: username});
-    console.log(`attempting to find user ${username}`, user)
+    console.log(`atempt to find user: ${username}`, user)
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -74,7 +75,7 @@ app.get('/user/:username', async (req, res) => {
 
 // Endpoint to create a new event
 app.post('/event', upload.single('eventImage'), async (req, res) => {
-  const { title, date, location, authorUsername } = req.body;
+  const { title, date, location, authorUsername, description } = req.body;
 
   try {
     // Check if the combination of title, date, and authorUsername is unique
@@ -93,14 +94,38 @@ app.post('/event', upload.single('eventImage'), async (req, res) => {
       eventImage: {
         data: req.file.buffer,
         contentType: req.file.mimetype
-      }
+      },
+      description
     });
 
     await newEvent.save();
+    console.log("EVENT CREATED")
     return res.json({ message: 'Event saved', event: newEvent });
   } catch (error) {
     console.error('Error saving event:', error);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Endpoint to register a new user (adds a single user)
+app.post('/register', upload.single('profileImage'), async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = new UserModel({
+      username,
+      password, // NOTE: Should hash this for security
+      userImage: req.file ? {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      } : undefined,
+    });
+
+    await user.save();
+    console.log("USER REGISTERED!!")
+    res.status(201).send({ message: 'User registered successfully!' });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
   }
 });
 

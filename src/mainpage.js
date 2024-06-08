@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "./sidebar";
 import axios from 'axios'; // Import Axios for making HTTP requests
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 window.Buffer = window.Buffer || require("buffer").Buffer;
 
 const Author = ({ name, imageUrl}) => {
@@ -26,20 +27,20 @@ const Activity = ({ activity, author, onYes, onNo, onSave }) => {
     eventImage.data
   ).toString('base64')}`;
 
-  var authorImage = ""
+  let authorImage = "";
   if (author) {
-    // set authorImage 
+    // Set authorImage 
     authorImage = `data:${author.userImage.contentType};base64,${Buffer.from(
       author.userImage.data
     ).toString('base64')}`;
   }
 
   return (
-    <div className="activity-wrapper">
-      <div className="activity-box" style={{ border: '1px solid #ccc', borderRadius: '30px', marginBottom: '10px' }}>
+    <div className="activity-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="activity-box" style={{ border: '1px solid #ccc', borderRadius: '30px', marginBottom: '10px', padding: '20px', textAlign: 'center', maxWidth: '600px', width: '100%' }}>
         {author && <Author name={author.username} imageUrl={authorImage} />}
         {/* Use the converted Base64 string as src */}
-        <img src={eventImg} alt={title} style={{ width: 512, height: 'auto'}} /> 
+        <img src={eventImg} alt={title} style={{ width: '100%', height: 'auto', borderRadius: '10px', marginBottom: '20px' }} />
         <p><b>{title}</b></p>
         <p>Date: {date}</p>
         <p>Location: {location}</p>
@@ -48,9 +49,6 @@ const Activity = ({ activity, author, onYes, onNo, onSave }) => {
     </div>
   );
 };
-
-
-
 
 const ActivityButtons = ({ onYes, onNo, onSave }) => {
   return (
@@ -77,6 +75,8 @@ const Mainpage = () => {
   const [activitiesData, setActivitiesData] = useState([]);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [userData, setUserData] = useState(null); // State to hold user data
+  const { user } = useAuth(); // Extract user data using useAuth
+
 
   useEffect(() => {
     // Fetch events data from the server when the component mounts
@@ -144,14 +144,7 @@ const Mainpage = () => {
   );
 
   return (
-  
   <div>
-    <div className="transition-button" style={{ marginTop: '10px', textAlign: 'center' }}>
-      <Link to="/create-event">
-        <button>Create Event</button>
-      </Link>
-    </div>
-
     <TwoColumnLayout
       component={activityComponent}
       userData={userData} // Pass userData to TwoColumnLayout
